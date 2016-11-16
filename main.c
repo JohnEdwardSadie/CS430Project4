@@ -361,6 +361,47 @@ double* Shade(int recurseValue, double* color, int closestObject, double Ro[], d
             double VR = DotProduct(cameraToObject, reflect);
             double NL = DotProduct(closestN, DL);
 
+            //Values of reflection
+              double recurseRo[3] = {0,0,0};
+              memcpy(recurseRo,NewRo, sizeof(double)*3);
+
+              double recurseRd[3] = {0,0,0};
+              double c1;
+              c1 = DotProduct(closestN, Rd);
+              c1 = -1*c1;
+              //Using our math functions instantiated in the beginning for scaling
+              VectorScaling(c1, closestN, recurseRd);
+              VectorScaling(2, recurseRd, recurseRd);
+              VectorAddition(Rd, recurseRd, recurseRd);
+              normalize(recurseRd);
+
+              recurseRo[0] = NewRo[0] + recurseRd[0]*0.01;
+              recurseRo[1] = NewRo[1] + recurseRd[1]*0.01;
+              recurseRo[2] = NewRo[2] + recurseRd[2]*0.01;
+
+
+
+              double reflection_color[3] = {0,0,0};
+              double refraction_color[3] = {0,0,0};
+              if(scene[closestObject].reflectivity != 0){
+                  Shade(recurseValue-1, reflection_color, RI, recurseRo, recurseRd, closestRT,1);
+              }
+              /* Implementing the color of reflectivity */
+
+              double e = (1 - scene[closestObject].reflectivity - scene[closestObject].refractivity);
+              //0
+              color[0] +=  e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
+                  ((IlluminateDiffuse(0, Diffuse, lightScene[i], NL) + IlluminateSpecular(0, Specular, lightScene[i], NL, VR, ns))) +
+                  (((scene[closestObject].reflectivity) * reflection_color[0]));
+              //1
+              color[1] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
+                  ((IlluminateDiffuse(1, Diffuse, lightScene[i], NL) + IlluminateSpecular(1,Specular,lightScene[i], NL, VR, ns))) +
+                  (((scene[closestObject].reflectivity) * reflection_color[1]));
+              //2
+              color[2] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i],NewRd,Pi)) *
+                  ((IlluminateDiffuse(2, Diffuse, lightScene[i], NL) + IlluminateSpecular(2, Specular, lightScene[i], NL, VR, ns))) +
+                  (((scene[closestObject].reflectivity) * reflection_color[2]));
+
         }
     }
     return color;
