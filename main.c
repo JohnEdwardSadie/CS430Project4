@@ -60,7 +60,8 @@ int lastIndexLight = 0;
 Pi = 3.14;
 double black[3] = {0,0,0};
 
-
+/*Function declaration for shading*/
+double* Shade(int recurseValue, double* color, int closestObject, double Ro[], double Rd[], double closestT, double rIndex);
 /*Math functions*/
 
 //creating a square operator
@@ -283,6 +284,86 @@ void rayCast(double N, double M){
             PixelBuffer[pos].b = (char)(clamp(actual[2])*255);
         }
     }
+}
+
+//Shade function
+double* Shade(int recurseValue, double* color, int closestObject, double Ro[], double Rd[], double closestT, double rIndex){
+    int i;
+    int j;
+    //Setting the base case for recursion
+    if(recurseValue == 0 || closestObject < 0 || closestT == 999999){
+        return black;
+    }
+    double NewRo[3] = {0,0,0};
+    NewRo[0] = (closestT * Rd[0]) + Ro[0];
+    NewRo[1] = (closestT * Rd[1]) + Ro[1];
+    NewRo[2] = (closestT * Rd[2]) + Ro[2];
+
+    /* Ambient + Diffuse + Emission Light */
+    for(i=0; i<=lastIndexLight; i++){
+        double NewRd[3] = {0,0,0};
+        VectorSubtraction(lightScene[i].position, NewRo, NewRd);
+        normalize(NewRd);
+        double DP = sqrt(Sqr(lightScene[i].position[0] - NewRo[0])+ Sqr(lightScene[i].position[1] - NewRo[1])+ Sqr(lightScene[i].position[2] - NewRo[2]));
+        double closestShadow = 999999;
+        int closestSIndex = -1;
+        //Checks what casts a shadow
+        for(j=0; j<=lastIndex; j++){
+            double closestS = 0;
+            if(j == closestObject){
+                continue;
+            }
+            if(scene[j].type == 's'){
+                closestS = sphereIntersection(NewRo, NewRd, scene[j].position, scene[j].radius);
+            }
+            if(scene[j].type == 'p'){
+                closestS = planeIntersection(NewRo, NewRd, scene[j].position, scene[j].normal);
+            }
+            if(closestT > DP){
+                continue;
+            }
+            if(closestS > 0.0 && closestS < closestShadow){
+                closestShadow = closestS;
+                closestSIndex = j;
+            }
+        }
+        if(closestSIndex < 0){
+            double closestN[3] = {0,0,0};
+            if(scene[closestObject].type == 's') {
+                    VectorSubtraction(NewRo, scene[closestObject].position, closestN);
+                    }
+            if(scene[closestObject].type == 'p'){
+                closestN[0] = scene[closestObject].normal[0];
+                closestN[1] = scene[closestObject].normal[1];
+                closestN[2] = scene[closestObject].normal[2];
+            }
+            //light position from intersection
+            normalize(closestN); //grab real position
+            double *DL = NewRd;
+            double reflect[3] = {0,0,0};
+            VectorReflection(closestN, DL, reflect);
+            normalize(reflect);
+            //direction of the object seen by camera
+            double cameraToObject[3] = {0,0,0};
+            cameraToObject[0] = Rd[0];
+            cameraToObject[1] = Rd[1];
+            cameraToObject[2] = Rd[2];
+            normalize(cameraToObject);
+
+            //current diffuse and specular
+            double* Diffuse = scene[closestObject].diffusecolor;
+            double* Specular = scene[closestObject].specularColor;
+            //Palmer suggested 20
+            //For shininess
+            double ns = 20;
+            normalize(closestN);
+            normalize(DL);
+            double VR = DotProduct(cameraToObject, reflect);
+            double NL = DotProduct(closestN, DL);
+
+        }
+    }
+    return color;
 }
 
 
