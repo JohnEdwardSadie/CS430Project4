@@ -63,7 +63,7 @@ double black[3] = {0,0,0};
 /*Function declaration for shading*/
 double* Shade(int recurseValue, double* color, int closestObject, double Ro[], double Rd[], double closestT, double rIndex);
 double doubleShoot(double* Ro, double* Rd);
-
+int intShoot(double* Ro, double* Rd);
 
 /*Math functions*/
 
@@ -298,7 +298,7 @@ double* Shade(int recurseValue, double* color, int closestObject, double Ro[], d
         return black;
     }
 
-    //returning variable of type double
+//returning variable of type double
 double doubleShoot(double* Ro, double* Rd){
     int i;
     double closestT = 999999;
@@ -315,6 +315,28 @@ double doubleShoot(double* Ro, double* Rd){
         }
     }
     return closestT;
+    normalize(Rd);
+}
+//returning variable of type int
+int intShoot(double* Ro, double* Rd){
+    int i;
+    int closestObject = -1;
+    double closestT = 999999;
+
+    for(i=0; i<=lastIndex; i++){
+        double t = 0;
+        if(scene[i].type == 's'){
+                t = sphereIntersection(Ro, Rd, scene[i].position, scene[i].radius);
+        }
+        if(scene[i].type == 'p'){
+                t = planeIntersection(Ro, Rd, scene[i].position, scene[i].normal);
+        }
+        if(t > 0 && t < closestT){
+            closestT = t;
+            closestObject = i;
+        }
+    }
+    return closestObject;
     normalize(Rd);
 }
 
@@ -384,7 +406,6 @@ double doubleShoot(double* Ro, double* Rd){
             normalize(DL);
             double VR = DotProduct(cameraToObject, reflect);
             double NL = DotProduct(closestN, DL);
-
             //Values of reflection
             double recurseRo[3] = {0,0,0};
             memcpy(recurseRo,NewRo, sizeof(double)*3);
@@ -404,29 +425,32 @@ double doubleShoot(double* Ro, double* Rd){
             recurseRo[2] = NewRo[2] + recurseRd[2]*0.01;
 
             double closestRT = doubleShoot(recurseRo,recurseRd);
+            int RI = intShoot(recurseRo,recurseRd);
 
+            double reflection_color[3] = {0,0,0};
+            double refraction_color[3] = {0,0,0};
+            if(scene[closestObject].reflectivity != 0){
+                Shade(recurseValue-1, reflection_color, RI, recurseRo, recurseRd, closestRT,1);
+            }
             /* Implementing the color of reflectivity */
 
             double e = (1 - scene[closestObject].reflectivity - scene[closestObject].refractivity);
             //0
             color[0] +=  e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
-              ((IlluminateDiffuse(0, Diffuse, lightScene[i], NL) + IlluminateSpecular(0, Specular, lightScene[i], NL, VR, ns))) +
-              (((scene[closestObject].reflectivity) * reflection_color[0]));
+                ((IlluminateDiffuse(0, Diffuse, lightScene[i], NL) + IlluminateSpecular(0, Specular, lightScene[i], NL, VR, ns))) +
+                (((scene[closestObject].reflectivity) * reflection_color[0]));
             //1
             color[1] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
-              ((IlluminateDiffuse(1, Diffuse, lightScene[i], NL) + IlluminateSpecular(1,Specular,lightScene[i], NL, VR, ns))) +
-              (((scene[closestObject].reflectivity) * reflection_color[1]));
+                ((IlluminateDiffuse(1, Diffuse, lightScene[i], NL) + IlluminateSpecular(1,Specular,lightScene[i], NL, VR, ns))) +
+                (((scene[closestObject].reflectivity) * reflection_color[1]));
             //2
             color[2] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i],NewRd,Pi)) *
-              ((IlluminateDiffuse(2, Diffuse, lightScene[i], NL) + IlluminateSpecular(2, Specular, lightScene[i], NL, VR, ns))) +
-              (((scene[closestObject].reflectivity) * reflection_color[2]));
-
+                ((IlluminateDiffuse(2, Diffuse, lightScene[i], NL) + IlluminateSpecular(2, Specular, lightScene[i], NL, VR, ns))) +
+                (((scene[closestObject].reflectivity) * reflection_color[2]));
         }
     }
     return color;
 }
-
-
 
 // next_c() wraps the getc() function and provides error checking and line
 // nvber maintenance

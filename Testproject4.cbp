@@ -11,6 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters='&quot;500&quot; &quot;500&quot; &quot;raytrace.json&quot; &quot;output.ppm&quot;' />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
