@@ -62,6 +62,9 @@ double black[3] = {0,0,0};
 
 /*Function declaration for shading*/
 double* Shade(int recurseValue, double* color, int closestObject, double Ro[], double Rd[], double closestT, double rIndex);
+double doubleShoot(double* Ro, double* Rd);
+
+
 /*Math functions*/
 
 //creating a square operator
@@ -294,6 +297,27 @@ double* Shade(int recurseValue, double* color, int closestObject, double Ro[], d
     if(recurseValue == 0 || closestObject < 0 || closestT == 999999){
         return black;
     }
+
+    //returning variable of type double
+double doubleShoot(double* Ro, double* Rd){
+    int i;
+    double closestT = 999999;
+    for(i=0; i<=lastIndex; i++){
+        double t = 0;
+        if(scene[i].type == 's'){
+                t = sphereIntersection(Ro, Rd, scene[i].position, scene[i].radius);
+        }
+        if(scene[i].type == 'p'){
+                t = planeIntersection(Ro, Rd, scene[i].position, scene[i].normal);
+        }
+        if(t > 0 && t < closestT){
+            closestT = t;
+        }
+    }
+    return closestT;
+    normalize(Rd);
+}
+
     double NewRo[3] = {0,0,0};
     NewRo[0] = (closestT * Rd[0]) + Ro[0];
     NewRo[1] = (closestT * Rd[1]) + Ro[1];
@@ -362,45 +386,46 @@ double* Shade(int recurseValue, double* color, int closestObject, double Ro[], d
             double NL = DotProduct(closestN, DL);
 
             //Values of reflection
-              double recurseRo[3] = {0,0,0};
-              memcpy(recurseRo,NewRo, sizeof(double)*3);
+            double recurseRo[3] = {0,0,0};
+            memcpy(recurseRo,NewRo, sizeof(double)*3);
 
-              double recurseRd[3] = {0,0,0};
-              double c1;
-              c1 = DotProduct(closestN, Rd);
-              c1 = -1*c1;
-              //Using our math functions instantiated in the beginning for scaling
-              VectorScaling(c1, closestN, recurseRd);
-              VectorScaling(2, recurseRd, recurseRd);
-              VectorAddition(Rd, recurseRd, recurseRd);
-              normalize(recurseRd);
+            double recurseRd[3] = {0,0,0};
+            double c1;
+            c1 = DotProduct(closestN, Rd);
+            c1 = -1*c1;
+            //Using our math functions instantiated in the beginning for scaling
+            VectorScaling(c1, closestN, recurseRd);
+            VectorScaling(2, recurseRd, recurseRd);
+            VectorAddition(Rd, recurseRd, recurseRd);
+            normalize(recurseRd);
 
-              recurseRo[0] = NewRo[0] + recurseRd[0]*0.01;
-              recurseRo[1] = NewRo[1] + recurseRd[1]*0.01;
-              recurseRo[2] = NewRo[2] + recurseRd[2]*0.01;
+            recurseRo[0] = NewRo[0] + recurseRd[0]*0.01;
+            recurseRo[1] = NewRo[1] + recurseRd[1]*0.01;
+            recurseRo[2] = NewRo[2] + recurseRd[2]*0.01;
+
+            double closestRT = doubleShoot(recurseRo,recurseRd);
 
 
-
-              double reflection_color[3] = {0,0,0};
-              double refraction_color[3] = {0,0,0};
-              if(scene[closestObject].reflectivity != 0){
+            double reflection_color[3] = {0,0,0};
+            double refraction_color[3] = {0,0,0};
+            if(scene[closestObject].reflectivity != 0){
                   Shade(recurseValue-1, reflection_color, RI, recurseRo, recurseRd, closestRT,1);
-              }
-              /* Implementing the color of reflectivity */
+            }
+            /* Implementing the color of reflectivity */
 
-              double e = (1 - scene[closestObject].reflectivity - scene[closestObject].refractivity);
-              //0
-              color[0] +=  e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
-                  ((IlluminateDiffuse(0, Diffuse, lightScene[i], NL) + IlluminateSpecular(0, Specular, lightScene[i], NL, VR, ns))) +
-                  (((scene[closestObject].reflectivity) * reflection_color[0]));
-              //1
-              color[1] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
-                  ((IlluminateDiffuse(1, Diffuse, lightScene[i], NL) + IlluminateSpecular(1,Specular,lightScene[i], NL, VR, ns))) +
-                  (((scene[closestObject].reflectivity) * reflection_color[1]));
-              //2
-              color[2] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i],NewRd,Pi)) *
-                  ((IlluminateDiffuse(2, Diffuse, lightScene[i], NL) + IlluminateSpecular(2, Specular, lightScene[i], NL, VR, ns))) +
-                  (((scene[closestObject].reflectivity) * reflection_color[2]));
+            double e = (1 - scene[closestObject].reflectivity - scene[closestObject].refractivity);
+            //0
+            color[0] +=  e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
+              ((IlluminateDiffuse(0, Diffuse, lightScene[i], NL) + IlluminateSpecular(0, Specular, lightScene[i], NL, VR, ns))) +
+              (((scene[closestObject].reflectivity) * reflection_color[0]));
+            //1
+            color[1] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i], NewRd, Pi)) *
+              ((IlluminateDiffuse(1, Diffuse, lightScene[i], NL) + IlluminateSpecular(1,Specular,lightScene[i], NL, VR, ns))) +
+              (((scene[closestObject].reflectivity) * reflection_color[1]));
+            //2
+            color[2] += e * (RadialAttenuation(lightScene[i], NewRo) * AngularAttenuation(lightScene[i],NewRd,Pi)) *
+              ((IlluminateDiffuse(2, Diffuse, lightScene[i], NL) + IlluminateSpecular(2, Specular, lightScene[i], NL, VR, ns))) +
+              (((scene[closestObject].reflectivity) * reflection_color[2]));
 
         }
     }
