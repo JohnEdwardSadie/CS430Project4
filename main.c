@@ -405,12 +405,6 @@ double doubleShoot(double* Ro, double* Rd){
 
             double closestRT = doubleShoot(recurseRo,recurseRd);
 
-
-            double reflection_color[3] = {0,0,0};
-            double refraction_color[3] = {0,0,0};
-            if(scene[closestObject].reflectivity != 0){
-                  Shade(recurseValue-1, reflection_color, RI, recurseRo, recurseRd, closestRT,1);
-            }
             /* Implementing the color of reflectivity */
 
             double e = (1 - scene[closestObject].reflectivity - scene[closestObject].refractivity);
