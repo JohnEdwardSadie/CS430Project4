@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1479275649 source:c:\users\3ggie\desktop\testproject4\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+
+1479255171 c:\users\3ggie\desktop\testproject4\structs.h
+
+1479255171 c:\users\3ggie\desktop\testproject4\functions.h
+
